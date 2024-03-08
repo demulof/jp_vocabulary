@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from dict_voc import dict_50, dict_N5_voc, dict_N4_voc, dict_N3_voc, dict_N2_voc
+from dict_voc import dict_50, dict_N5_voc, dict_N4_voc, dict_N3_voc, dict_N2_voc, dict_N1_voc
 
 class TransparentWindow:
     def __init__(self, root, words, mode):
@@ -13,37 +13,47 @@ class TransparentWindow:
         # 初始標題列隱藏狀態
         self.title_visible = True
         # 初始文字大小
-        self.font_size = 24
+        self.font_size = 10
         # 初始視窗透明度
         self.opacity = 0.3
-
-        # 單字區塊
-        self.label = tk.Label(root, text=self.words[self.index], font=("Helvetica", self.font_size))
-        self.label.pack(expand=True, fill=tk.BOTH)
 
         # 設定按鈕樣式
         style = ttk.Style()
         style.configure("TButton", relief="flat", padding=0, borderwidth=0)
+        style.configure('Custom.TLabel', background='white', foreground='black')
+
+        self.title_frame = ttk.Frame(root, style='Custom.TLabel')
+        self.title_frame.pack(side=tk.TOP, fill=tk.X)
+
+        # 單字區塊
+        self.label = tk.Label(root, text=self.words[self.index], font=("Helvetica", self.font_size), bg='white')
+        self.label.config(bd=0, highlightthickness=0)
+        self.label.pack(expand=True, fill=tk.BOTH)
 
         # 切換單字鈕(下一個)
-        self.prev_button = ttk.Button(root, text="<", command=self.prev_word, style="TButton")
-        self.prev_button.pack(side=tk.LEFT, padx=10, pady=10)
+        self.prev_label = tk.Label(self.title_frame, text="<", font=("Helvetica", 14), bg='white')
+        self.prev_label.pack(side=tk.LEFT, padx=10, pady=10)
+        self.prev_label.bind("<Button-1>", lambda event: self.prev_word())
 
         # 切換單字鈕(上一個)
-        self.next_button = ttk.Button(root, text=">", command=self.next_word, style="TButton")
-        self.next_button.pack(side=tk.RIGHT, padx=10, pady=10)
+        self.next_label = tk.Label(self.title_frame, text=">", font=("Helvetica", 14), bg='white')
+        self.next_label.pack(side=tk.RIGHT, padx=10, pady=10)
+        self.next_label.bind("<Button-1>", lambda event: self.next_word())
 
         # 切換隱藏標題列鈕
-        self.toggle_title_button = ttk.Button(root, text="^", command=self.toggle_title, style="TButton")
-        self.toggle_title_button.pack(side = tk.LEFT, padx=10, pady=10)
+        self.toggle_title_label = tk.Label(self.title_frame, text="^", font=("Helvetica", 14), bg='white')
+        self.toggle_title_label.pack(side=tk.LEFT, padx=10, pady=10)
+        self.toggle_title_label.bind("<Button-1>", lambda event: self.toggle_title())
 
-        #切換有無中文模式鈕
-        self.toggle_mode_button = ttk.Button(root, text="#", command=self.toggle_mode, style="TButton")
-        self.toggle_mode_button.pack(side = tk.RIGHT, padx=10, pady=10)
+        # 切換有無中文模式鈕
+        self.toggle_mode_label = tk.Label(self.title_frame, text="#", font=("Helvetica", 14), bg='white')
+        self.toggle_mode_label.pack(side=tk.RIGHT, padx=10, pady=10)
+        self.toggle_mode_label.bind("<Button-1>", lambda event: self.toggle_mode())
+
 
         # 设置窗口透明
-        root.attributes("-alpha", 0.3)
-        root.attributes("-transparentcolor", "white")
+        root.attributes("-alpha", 0.1)
+        # root.attributes("-transparentcolor", "white")
 
         # 拖動視窗事件處理
         root.bind("<Button-1>", self.start_move)
@@ -51,6 +61,9 @@ class TransparentWindow:
 
         # 調整視窗大小事件處理
         root.bind("<Configure>", self.on_resize)
+
+         # 監聽視窗大小改變事件
+        root.bind("<Configure>", self.on_window_resize)
 
         # 根據顯示模式設置初始顯示狀態
         if not self.mode:
@@ -113,6 +126,9 @@ class TransparentWindow:
 
     def on_resize(self, event):
         self.root.attributes("-transparentcolor", "white")
+    
+    def on_window_resize(self, event):
+        self.label.config(wraplength=self.root.winfo_width())
 
     def toggle_mode(self):
         self.mode = not self.mode
@@ -133,8 +149,9 @@ def main():
     root = tk.Tk()
     root.title(" ")
     root.geometry("400x200")
+    root.wm_attributes('-transparentcolor', 'white')
 
-    app1 = TransparentWindow(root, words, mode=False)
+    app1 = TransparentWindow(root, words, mode=True)
 
     # 第二個視窗，控制視窗
     control_window = tk.Toplevel(root)
@@ -155,7 +172,7 @@ def main():
     alpha_label.grid(row=3, column=0, padx=10, pady=10)
 
     # 切換字典下拉選單
-    dictionary_combobox = ttk.Combobox(control_window, values=["50音", "N5", "N4", "N3", "N2"]) # 修改為你的字典名稱
+    dictionary_combobox = ttk.Combobox(control_window, values=["50音", "N5", "N4", "N3", "N2", "N1"]) # 修改為你的字典名稱
     dictionary_combobox.current(0)  # 預設選擇第一個字典
     dictionary_combobox.grid(row=0, column=1, padx=10, pady=10)
 
@@ -195,6 +212,8 @@ def change_dictionary(event, words, app, word_combobox):
         words = [(f"{i+1}. {word[0]}", word[1]) for i, word in enumerate(dict_N3_voc.items())]
     elif selected_dictionary == "N2":
         words = [(f"{i+1}. {word[0]}", word[1]) for i, word in enumerate(dict_N2_voc.items())]
+    elif selected_dictionary == "N1":
+        words = [(f"{i+1}. {word[0]}", word[1]) for i, word in enumerate(dict_N1_voc.items())]
     app.words = words
     app.index = 0
     app.update_word()
